@@ -90,4 +90,4 @@
       loop:
         - linux_{{ linux_distro_name }}_ks_autogen.iso
         - "{{ linux_distro_name }}_template.iso"
-        -  ks_iso/
+        - ks_iso/
