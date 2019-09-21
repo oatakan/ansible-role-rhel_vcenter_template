@@ -1,0 +1,44 @@
+---
+
+temp_directory: tmp{{ awx_job_id | default('') }}
+
+iso_file: "{{ datastore_iso_folder }}/linux_{{ linux_distro_name }}_ks{{ awx_job_id | default('') }}.iso"
+
+export_dir: "{{ playbook_dir }}/{{ temp_directory }}"
+
+providers:
+  vcenter:
+    datacenter: "{{ vcenter_datacenter }}"
+    cluster: "{{ vcenter_cluster }}"
+    resource_pool: "{{ vcenter_resource_pool }}"
+    folder: "{{ vcenter_folder }}"
+    datastore: "{{ vcenter_datastore }}"
+
+autounattend_cdrom:
+  type: iso
+  iso_path: "[{{ providers.vcenter.datastore | default('datastore1') }}] {{ iso_file }}"
+
+template:
+  name: "{{ template_vm_name }}"
+  role: linux_template
+  app_name: linux_template_generate
+  domain: "{{ template_vm_domain }}"
+  disk:
+    - size_gb: "{{ template_vm_root_disk_size }}"
+      type: "{{ template_vm_root_disk_type }}"
+      datastore: "{{ providers.vcenter.datastore | default('datastore1') }}"
+  memory: "{{ template_vm_memory }}"
+  cpu: "{{ template_vm_cpu }}"
+  guest_id: "{{ template_vm_guest_id }}"
+  boot_firmware: efi
+  networks:
+    - name: "{{ template_vm_network_name }}"
+      ip: "{{ template_vm_ip_address }}"
+      netmask: "{{ template_vm_netmask }}"
+      gateway: "{{ template_vm_gateway }}"
+      domain: "{{ template_vm_domain }}"
+      device_type: e1000e
+      dns_servers: "{{ template_vm_dns_servers }}"
+  cdrom:
+    - type: iso
+      iso_path: "[{{ providers.vcenter.datastore | default('datastore1') }}] {{ datastore_iso_folder }}/{{ iso_file_name }}"

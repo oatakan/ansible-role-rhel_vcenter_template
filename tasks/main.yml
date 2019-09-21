@@ -1,0 +1,83 @@
+---
+
+- include_tasks: preflight_check.yml
+
+# remove existing template
+- block:
+    - include_tasks: convert_to_vm.yml
+
+    - include_tasks: remove_vm.yml
+
+  when:
+    - template_force|bool
+    - template_found|bool
+
+- block:
+    - include_tasks: make_iso.yml
+
+    - include_tasks: provision_vm.yml
+
+    - name: run setup module
+      setup:
+      delegate_to: "{{ template_vm_ip_address }}"
+      vars:
+        ansible_user: "{{ local_account_username }}"
+        ansible_password: "{{ local_account_password }}"
+        ansible_port: "{{ vm_ansible_port | default('22') }}"
+
+    - block:
+        - include_role:
+            name: "{{ linux_role }}"
+            apply:
+              vars:
+                ansible_user: "{{ local_account_username }}"
+                ansible_password: "{{ local_account_password }}"
+                ansible_port: "{{ vm_ansible_port | default('22') }}"
+              delegate_to: "{{ template_vm_ip_address }}"
+              become: yes
+          loop_control:
+            loop_var: linux_role
+          loop:
+            - oatakan.rhn
+            - oatakan.rhel_upgrade
+            - oatakan.rhel_template_build
+
+      always:
+        - include_role:
+            name: oatakan.rhn
+            apply:
+              vars:
+                ansible_user: "{{ local_account_username }}"
+                ansible_password: "{{ local_account_password }}"
+                ansible_port: "{{ vm_ansible_port | default('22') }}"
+                role_action: unregister
+              delegate_to: "{{ template_vm_ip_address }}"
+              become: yes
+
+    - name: Force handlers to run before stoppping the vm
+      meta: flush_handlers
+
+    - include_tasks: stop_vm.yml
+
+    - include_tasks: create_snapshot.yml
+      when: create_snapshot|bool
+
+    - include_tasks: convert_to_template.yml
+
+    - include_tasks: export_ovf.yml
+      when: export_ovf|bool
+
+  rescue:
+    - include_tasks: convert_to_vm.yml
+
+    - include_tasks: remove_vm.yml
+      when: remove_vm_on_error|bool
+
+  always:
+    - include_tasks: datastore_iso_remove.yml
+
+    - name: remove temporary directory
+      file:
+        path: "{{ temp_directory }}"
+        state: absent
+      when: not export_ovf|bool

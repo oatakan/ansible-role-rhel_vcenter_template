@@ -1,0 +1,47 @@
+---
+
+- name: export ovf file
+  vmware_export_ovf:
+    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+    datacenter: "{{ providers.vcenter.datacenter }}"
+    uuid: "{{ instance.instance.uuid | default(omit) }}"
+    name: "{{ template.name }}"
+    export_with_images: no
+    export_dir: "{{ export_dir }}/"
+    validate_certs: no
+  async: 7200
+  poll: 0
+  register: export_ovf_file
+
+- name: wait for ovf export to complete
+  async_status:
+    jid: "{{ export_ovf_file.ansible_job_id }}"
+  register: ovf
+  until: ovf.finished
+  retries: "{{ instance_wait_retry_limit }}"
+  delay: 10
+
+- name: create ova file
+  archive:
+    path: "{{ export_dir }}/{{ template.name }}/*"
+    dest: "{{ export_dir }}/{{ template.name }}.ova"
+    format: tar
+
+- name: remove exported temp files
+  file:
+    path: "{{ export_dir }}/{{ template.name }}"
+    state: absent
+
+# this is just to close the loop, you can change this implementation to upload ova to some other system/storage
+- name: upload ova file to datastore
+  vsphere_copy:
+    host: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
+    login: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+    src: "{{ export_dir }}/{{ template.name }}.ova"
+    datacenter: "{{ providers.vcenter.datacenter }}"
+    datastore: "{{ providers.vcenter.datastore | default('datastore2') }}"
+    path: "{{ datastore_ova_folder }}/{{ template.name }}.ova"
+    validate_certs: no

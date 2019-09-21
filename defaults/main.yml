@@ -1,0 +1,49 @@
+---
+
+instance_wait_retry_limit: 300
+instance_wait_connection_timeout: 400
+
+create_snapshot: yes
+snapshot_name: Linked
+snapshot_description: Linked snapshot for cloning
+
+# this will remove existing template with the same name
+template_force: no
+template_found: no
+
+export_ovf: no
+
+datastore_iso_folder: iso
+datastore_ova_folder: ova
+
+remove_vm_on_error: yes
+
+local_administrator_password: Chang3MyP@ssw0rd21
+local_account_username: ansible
+local_account_password: Chang3MyP@ssw0rd21
+
+linux_distro_name: rhel_77
+template_iso_url: http://repo.ialab.dsu.edu/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-NetInstall-1908.iso
+iso_file_name: CentOS-7-x86_64-DVD-1908.iso
+linux_ks_folder: rhel7
+
+template_vm_name: centos77-x64-bigdisk_v1
+template_vm_root_disk_size: 300
+template_vm_root_disk_type: thin
+template_vm_memory: 4096
+template_vm_cpu: 2
+template_vm_guest_id: centos7_64Guest
+template_vm_network_name: mgmt
+template_vm_ip_address: 192.168.1.98
+template_vm_netmask: 255.255.255.0
+template_vm_gateway: 192.168.1.254
+template_vm_domain: home.ad
+template_vm_dns_servers:
+  - 192.168.1.254
+  - 8.8.8.8
+
+vcenter_datacenter: cloud
+vcenter_cluster: mylab
+vcenter_resource_pool: manageto
+vcenter_folder: template
+vcenter_datastore: datastore2

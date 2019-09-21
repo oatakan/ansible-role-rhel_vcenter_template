@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: False
+  connection: local
+  become: no
+  vars:
+    ansible_port: 5986
+  roles:
+    - ../.
