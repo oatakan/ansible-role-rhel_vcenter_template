@@ -16,7 +16,9 @@ network --hostname=localhost.localdomain
 rootpw {{ local_administrator_password }}
 authconfig --enableshadow --passalgo=sha512
 
+{% if template_selinux_enabled is undefined or not template_selinux_enabled %}
 selinux --disabled
+{% endif %}
 text
 skipx
 
@@ -119,6 +121,8 @@ sshpass
 yum install -y sudo
 echo "{{ local_account_username }}        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers.d/{{ local_account_username }}
 sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+{% if template_selinux_enabled is undefined or not template_selinux_enabled %}
 sed -i s'/SELINUX=enforcing/SELINUX=disabled'/g /etc/selinux/config
+{% endif %}
 yum clean all
 %end
