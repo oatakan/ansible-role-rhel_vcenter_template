@@ -17,23 +17,25 @@
 
     - include_tasks: provision_vm.yml
 
-    - name: run setup module
-      setup:
-      delegate_to: "{{ template_vm_ip_address }}"
-      vars:
+    - name: add host
+      add_host:
+        hostname: template_vm
+        ansible_host: '{{ template_vm_ip_address }}'
+        host_key_checking: false
         ansible_user: "{{ local_account_username }}"
         ansible_password: "{{ local_account_password }}"
         ansible_port: "{{ vm_ansible_port | default('22') }}"
+        ansible_ssh_common_args: '-o UserKnownHostsFile=/dev/null'
+
+    - name: run setup module
+      setup:
+      delegate_to: template_vm
 
     - block:
         - include_role:
             name: "{{ linux_role }}"
             apply:
-              vars:
-                ansible_user: "{{ local_account_username }}"
-                ansible_password: "{{ local_account_password }}"
-                ansible_port: "{{ vm_ansible_port | default('22') }}"
-              delegate_to: "{{ template_vm_ip_address }}"
+              delegate_to: template_vm
               become: yes
           loop_control:
             loop_var: linux_role
@@ -47,11 +49,8 @@
             name: oatakan.rhn
             apply:
               vars:
-                ansible_user: "{{ local_account_username }}"
-                ansible_password: "{{ local_account_password }}"
-                ansible_port: "{{ vm_ansible_port | default('22') }}"
                 role_action: unregister
-              delegate_to: "{{ template_vm_ip_address }}"
+              delegate_to: template_vm
               become: yes
 
     - name: Force handlers to run before stoppping the vm
