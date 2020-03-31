@@ -48,10 +48,10 @@
         - include_role:
             name: oatakan.rhn
             apply:
-              vars:
-                role_action: unregister
               delegate_to: template_vm
               become: yes
+          vars:
+            role_action: unregister
 
     - name: Force handlers to run before stoppping the vm
       meta: flush_handlers
