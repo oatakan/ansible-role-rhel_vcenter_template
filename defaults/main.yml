@@ -34,12 +34,12 @@ template_vm_memory: 4096
 template_vm_cpu: 2
 template_vm_guest_id: centos7_64Guest
 template_vm_network_name: mgmt
-template_vm_ip_address: 192.168.1.98
+template_vm_ip_address: 192.168.10.98
 template_vm_netmask: 255.255.255.0
-template_vm_gateway: 192.168.1.254
-template_vm_domain: home.ad
+template_vm_gateway: 192.168.10.254
+template_vm_domain: example.com
 template_vm_dns_servers:
-  - 192.168.1.254
+  - 8.8.4.4
   - 8.8.8.8
 
 template_selinux_enabled: no
@@ -49,3 +49,32 @@ vcenter_cluster: mylab
 vcenter_resource_pool: manageto
 vcenter_folder: template
 vcenter_datastore: datastore2
+
+os_short_names:
+  rhel77:
+    ks_folder: rhel7
+    guest_id: rhel_7x64
+  rhel78:
+    ks_folder: rhel7
+    guest_id: rhel_7x64
+  rhel80:
+    ks_folder: rhel8
+    guest_id: rhel_8x64
+  rhel81:
+    ks_folder: rhel8
+    guest_id: rhel_8x64
+  rhel82:
+    ks_folder: rhel8
+    guest_id: rhel_8x64
+  centos77:
+    ks_folder: rhel7
+    guest_id: rhel_7x64
+  centos80:
+    ks_folder: rhel8
+    guest_id: rhel_8x64
+  centos81:
+    ks_folder: rhel8
+    guest_id: rhel_8x64
+  centos82:
+    ks_folder: rhel8
+    guest_id: rhel_8x64
