@@ -33,16 +33,23 @@
 
     - block:
         - include_role:
-            name: "{{ linux_role }}"
+            name: oatakan.rhn
             apply:
               delegate_to: template_vm
               become: yes
-          loop_control:
-            loop_var: linux_role
-          loop:
-            - oatakan.rhn
-            - oatakan.rhel_upgrade
-            - oatakan.rhel_template_build
+
+        - include_role:
+            name: oatakan.rhel_upgrade
+            apply:
+              delegate_to: template_vm
+              become: yes
+          when: install_updates|bool
+
+        - include_role:
+            name: oatakan.rhel_template_build
+            apply:
+              delegate_to: template_vm
+              become: yes
 
       always:
         - include_role:
