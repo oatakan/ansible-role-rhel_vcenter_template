@@ -1,5 +1,20 @@
 ---
 
+- name: check if iso file exists
+  vsphere_file:
+    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+    datacenter: "{{ providers.vcenter.datacenter }}"
+    datastore: "{{ providers.vcenter.datastore }}"
+    path: "{{ datastore_iso_folder }}/{{ iso_file_name }}"
+    state: file
+  register: os_iso_file
+  failed_when: false
+
+- debug:
+    msg: "{{ os_iso_file | default("") }}"
+
 - name: gather only registered virtual machine templates
   vmware_vm_info:
     hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
