@@ -13,7 +13,7 @@
   failed_when: false
 
 - debug:
-    msg: "{{ os_iso_file | default("") }}"
+    msg: "{{ os_iso_file | default('') }}"
 
 - name: gather only registered virtual machine templates
   vmware_vm_info:
