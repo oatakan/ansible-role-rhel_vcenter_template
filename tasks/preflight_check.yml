@@ -2,9 +2,10 @@
 
 - name: check if iso file exists
   vsphere_file:
-    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
+    host: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
     password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+    validate_certs: no
     datacenter: "{{ providers.vcenter.datacenter }}"
     datastore: "{{ providers.vcenter.datastore }}"
     path: "{{ datastore_iso_folder }}/{{ iso_file_name }}"
