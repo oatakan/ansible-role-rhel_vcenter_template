@@ -52,30 +52,33 @@ vcenter_folder: template
 vcenter_datastore: datastore2
 
 os_short_names:
-  rhel77:
+  rhel_77:
     ks_folder: rhel7
-    guest_id: rhel_7x64
-  rhel78:
+    guest_id: rhel7_64Guest
+  rhel_78:
     ks_folder: rhel7
-    guest_id: rhel_7x64
-  rhel80:
+    guest_id: rhel7_64Guest
+  rhel_80:
     ks_folder: rhel8
-    guest_id: rhel_8x64
-  rhel81:
+    guest_id: rhel8_64Guest
+  rhel_81:
     ks_folder: rhel8
-    guest_id: rhel_8x64
-  rhel82:
+    guest_id: rhel8_64Guest
+  rhel_82:
     ks_folder: rhel8
-    guest_id: rhel_8x64
-  centos77:
+    guest_id: rhel8_64Guest
+  rhel_83:
+    ks_folder: rhel8
+    guest_id: rhel8_64Guest
+  centos_77:
     ks_folder: rhel7
-    guest_id: rhel_7x64
-  centos80:
+    guest_id: rhel7_64Guest
+  centos_80:
     ks_folder: rhel8
-    guest_id: rhel_8x64
-  centos81:
+    guest_id: rhel8_64Guest
+  centos_81:
     ks_folder: rhel8
-    guest_id: rhel_8x64
-  centos82:
+    guest_id: rhel8_64Guest
+  centos_82:
     ks_folder: rhel8
-    guest_id: rhel_8x64
+    guest_id: rhel8_64Guest

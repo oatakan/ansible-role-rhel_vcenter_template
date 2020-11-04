@@ -6,6 +6,9 @@ iso_file: "{{ datastore_iso_folder }}/linux_{{ linux_distro_name }}_ks{{ awx_job
 
 export_dir: "{{ playbook_dir }}/{{ temp_directory }}"
 
+linux_ks_folder: "{{ os_short_names[(linux_distro_name|default('rhel_80'))].ks_folder | default('rhel8') }}"
+template_vm_guest_id: "{{ os_short_names[(linux_distro_name|default('rhel_80'))].guest_id | default('rhel_8x64') }}"
+
 providers:
   vcenter:
     datacenter: "{{ vcenter_datacenter }}"
