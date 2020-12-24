@@ -30,18 +30,21 @@
     - name: run setup module
       setup:
       delegate_to: template_vm
+      connection: ssh
 
     - block:
         - include_role:
             name: oatakan.rhn
             apply:
               delegate_to: template_vm
+              connection: ssh
               become: yes
 
         - include_role:
             name: oatakan.rhel_upgrade
             apply:
               delegate_to: template_vm
+              connection: ssh
               become: yes
           when: install_updates|bool
 
@@ -49,6 +52,7 @@
             name: oatakan.rhel_template_build
             apply:
               delegate_to: template_vm
+              connection: ssh
               become: yes
 
       always:
@@ -56,6 +60,7 @@
             name: oatakan.rhn
             apply:
               delegate_to: template_vm
+              connection: ssh
               become: yes
           vars:
             role_action: unregister
