@@ -14,7 +14,7 @@
       command: >
         mkisofs -U -A "OEMDRV" -V "OEMDRV"
         -volset "OEMDRV" -J -joliet-long -r -v -T
-        -o {{ playbook_dir }}/{{ temp_directory }}/linux_{{ linux_distro_name }}_ks_autogen.iso .
+        -o {{ playbook_dir }}/{{ temp_directory }}/linux_{{ distro_name }}_ks_autogen.iso .
       args:
         chdir: "{{ playbook_dir }}/{{ temp_directory }}/ks_iso"
 
@@ -25,5 +25,5 @@
         path: "{{ temp_directory }}/{{ item }}"
         state: absent
       loop:
-        - linux_{{ linux_distro_name }}_ks_autogen.iso
+        - linux_{{ distro_name }}_ks_autogen.iso
         - ks_iso/

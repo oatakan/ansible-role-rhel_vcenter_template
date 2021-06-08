@@ -23,13 +23,13 @@ local_administrator_password: Chang3MyP@ssw0rd21
 local_account_username: ansible
 local_account_password: Chang3MyP@ssw0rd21
 
-linux_distro_name: rhel_77
+distro_name: rhel8
 template_iso_url: http://repo.ialab.dsu.edu/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-NetInstall-1908.iso
-iso_file_name: CentOS-7-x86_64-DVD-1908.iso
-linux_ks_folder: rhel7
+iso_file_name: CentOS-8.4.2105-x86_64-dvd1.iso
+linux_ks_folder: rhel8
 
-template_vm_name: centos77-x64-bigdisk_v1
-template_vm_root_disk_size: 300
+template_vm_name: centos84-x64-v1
+template_vm_root_disk_size: 10
 template_vm_root_disk_type: thin
 template_vm_memory: 4096
 template_vm_cpu: 2
@@ -52,33 +52,9 @@ vcenter_folder: template
 vcenter_datastore: datastore2
 
 os_short_names:
-  rhel_77:
+  rhel7:
     ks_folder: rhel7
     guest_id: rhel7_64Guest
-  rhel_78:
-    ks_folder: rhel7
-    guest_id: rhel7_64Guest
-  rhel_80:
-    ks_folder: rhel8
-    guest_id: rhel8_64Guest
-  rhel_81:
-    ks_folder: rhel8
-    guest_id: rhel8_64Guest
-  rhel_82:
-    ks_folder: rhel8
-    guest_id: rhel8_64Guest
-  rhel_83:
-    ks_folder: rhel8
-    guest_id: rhel8_64Guest
-  centos_77:
-    ks_folder: rhel7
-    guest_id: rhel7_64Guest
-  centos_80:
-    ks_folder: rhel8
-    guest_id: rhel8_64Guest
-  centos_81:
-    ks_folder: rhel8
-    guest_id: rhel8_64Guest
-  centos_82:
+  rhel8:
     ks_folder: rhel8
     guest_id: rhel8_64Guest

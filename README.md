@@ -43,7 +43,7 @@ Including an example of how to use your role (for instance, with variables passe
         export_ovf: no # export the template to export domain upon creation
         local_account_password: ''
         local_administrator_password: ''
-        linux_distro_name: rhel_81 # this needs to be one of the standard values see 'os_short_names' var
+        distro_name: rhel8 # this needs to be one of the standard values see 'os_short_names' var
         template_vm_name: rhel81-x64-v1
         template_vm_guest_id: rhel8_64Guest
         template_vm_root_disk_size: 10
