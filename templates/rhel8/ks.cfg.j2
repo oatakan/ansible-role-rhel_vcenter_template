@@ -1,6 +1,5 @@
 firewall --disabled
 
-install
 cdrom
 lang en_US.UTF-8
 keyboard us
@@ -34,7 +33,7 @@ volgroup vg00 --pesize=4096 pv.00
 logvol swap  --fstype="swap" --size=4096 --name=swap --vgname=vg00
 logvol /  --fstype="xfs" --size=1 --grow --name=root --vgname=vg00
 
-auth  --useshadow  --enablemd5
+authselect --useshadow  --enablemd5
 firstboot --disabled
 services --enabled=NetworkManager,sshd
 reboot
