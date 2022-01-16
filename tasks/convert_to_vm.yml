@@ -8,8 +8,12 @@
     validate_certs: no
     datacenter: "{{ providers.vcenter.datacenter }}"
     cluster: "{{ providers.vcenter.cluster }}"
+    folder: "{{ providers.vcenter.folder | default('') }}"
     uuid: "{{ instance.instance.uuid | default(omit) }}"
     name: "{{ template.name }}"
     is_template: no
     state: present
-  when: template is defined
+  when:
+    - instance is defined
+    - instance.instance is defined
+    - template is defined
