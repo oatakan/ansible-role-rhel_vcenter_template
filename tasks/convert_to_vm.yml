@@ -13,7 +13,4 @@
     name: "{{ template.name }}"
     is_template: no
     state: present
-  when:
-    - instance is defined
-    - instance.instance is defined
-    - template is defined
+  when: template is defined
