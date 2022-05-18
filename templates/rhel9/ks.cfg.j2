@@ -21,7 +21,6 @@ selinux --disabled
 text
 skipx
 
-logging --level=info
 eula --agreed
 
 bootloader --append="no_timer_check"
@@ -98,6 +97,10 @@ openssl
 # update root certs
 # wget -O/etc/pki/tls/certs/ca-bundle.crt https://curl.haxx.se/ca/cacert.pem --no-check-certificate
 # yum reinstall ca-certificates
+
+{% if permit_root_login_with_password %}
+sed -e 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+{% endif %}
 
 # sudo
 groupadd {{ local_account_username }}

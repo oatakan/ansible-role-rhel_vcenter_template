@@ -45,6 +45,8 @@ template_vm_dns_servers:
 
 template_selinux_enabled: no
 
+permit_root_login_with_password: true
+
 vcenter_datacenter: cloud
 vcenter_cluster: mylab
 vcenter_resource_pool: manageto
@@ -57,4 +59,7 @@ os_short_names:
     guest_id: rhel7_64Guest
   rhel8:
     ks_folder: rhel8
+    guest_id: rhel8_64Guest
+  rhel9:
+    ks_folder: rhel9
     guest_id: rhel8_64Guest
