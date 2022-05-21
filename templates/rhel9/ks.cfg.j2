@@ -25,8 +25,8 @@ eula --agreed
 
 bootloader --append="no_timer_check"
 clearpart --all --initlabel
-part /boot/efi --fstype="efi" --size=200 --fsoptions="umask=0077,shortname=winnt"
-part /boot --fstype="xfs" --size=1024
+part /boot/efi --fstype="efi" --size=200 --fsoptions="umask=0077,shortname=winnt" --asprimary
+part /boot --fstype="xfs" --size=1024 --asprimary
 part pv.00 --fstype="lvmpv" --size=1 --grow --asprimary
 volgroup vg00 --pesize=4096 pv.00
 logvol swap  --fstype="swap" --size=4096 --name=swap --vgname=vg00

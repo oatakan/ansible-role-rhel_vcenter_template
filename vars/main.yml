@@ -7,7 +7,7 @@ iso_file: "{{ datastore_iso_folder }}/linux_{{ distro_name }}_ks{{ awx_job_id | 
 export_dir: "{{ playbook_dir }}/{{ temp_directory }}"
 
 linux_ks_folder: "{{ os_short_names[(distro_name|default('rhel8'))].ks_folder | default('rhel8') }}"
-template_vm_guest_id: "{{ os_short_names[(distro_name|default('rhel8'))].guest_id | default('rhel_8x64') }}"
+template_vm_guest_id: "{{ os_short_names[(distro_name|default('rhel8'))].guest_id | default('rhel8_64Guest') }}"
 
 providers:
   vcenter:
