@@ -1,5 +1,9 @@
 ---
 
+- name: set template_found to false
+  set_fact:
+    template_found: false
+
 - name: check if iso file exists
   vsphere_file:
     host: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
@@ -26,9 +30,9 @@
   register: template_facts
 
 - block:
-    - name: set template_found to yes
+    - name: set template_found to true
       set_fact:
-        template_found: yes
+        template_found: true
 
     - name: fail with message
       fail:
@@ -42,9 +46,9 @@
     - template_facts.virtual_machines[template.name] is defined
 
 - block:
-    - name: set template_found to yes
+    - name: set template_found to true
       set_fact:
-        template_found: yes
+        template_found: true
 
     - name: fail with message
       fail:
