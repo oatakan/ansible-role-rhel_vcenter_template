@@ -33,6 +33,7 @@ Example Playbook
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
+    ---
     - name: create a vmware rhel template
       hosts: all
       gather_facts: False
@@ -68,6 +69,7 @@ Including an example of how to use your role (for instance, with variables passe
       roles:
         - oatakan.rhel_vcenter_template
 
+    ---
     - name: delete a vmware rhel template
       hosts: all
       gather_facts: false

@@ -25,7 +25,7 @@ local_administrator_password: ''
 local_account_username: ansible
 local_account_password: ''
 
-distro_name: rhel8
+distro_name: rhel9
 template_iso_url: https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso
 iso_file_name: CentOS-Stream-9-latest-x86_64-dvd1.iso
 linux_ks_folder: rhel9
