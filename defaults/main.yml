@@ -1,5 +1,7 @@
 ---
 
+role_action: provision #provision or deprovision
+
 install_updates: yes
 instance_wait_retry_limit: 300
 instance_wait_connection_timeout: 400
@@ -19,21 +21,21 @@ datastore_ova_folder: ova
 
 remove_vm_on_error: yes
 
-local_administrator_password: Chang3MyP@ssw0rd21
+local_administrator_password: ''
 local_account_username: ansible
-local_account_password: Chang3MyP@ssw0rd21
+local_account_password: ''
 
 distro_name: rhel8
-template_iso_url: http://repo.ialab.dsu.edu/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-NetInstall-1908.iso
-iso_file_name: CentOS-8.4.2105-x86_64-dvd1.iso
-linux_ks_folder: rhel8
+template_iso_url: https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso
+iso_file_name: CentOS-Stream-9-latest-x86_64-dvd1.iso
+linux_ks_folder: rhel9
 
-template_vm_name: centos84-x64-v1
+template_vm_name: centos9-stream-x64-v1
 template_vm_root_disk_size: 10
 template_vm_root_disk_type: thin
 template_vm_memory: 4096
 template_vm_cpu: 2
-template_vm_guest_id: centos7_64Guest
+template_vm_guest_id: rhel8_64Guest
 template_vm_network_name: mgmt
 template_vm_ip_address: 192.168.10.98
 template_vm_netmask: 255.255.255.0
