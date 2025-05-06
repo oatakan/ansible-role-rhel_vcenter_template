@@ -17,9 +17,10 @@
     wait_for_ip_address: no
     disk: "{{ template.disk|default(omit) }}"
     hardware:
+      secure_boot: "{{ template.secure_boot | default(omit) }}"
       memory_mb: "{{ template.memory }}"
       num_cpus: "{{ template.cpu }}"
-      scsi: lsilogicsas
+      scsi: "{{ template.controller }}"
       boot_firmware: "{{ template.boot_firmware | default(omit) }}"
     guest_id: "{{ template.guest_id }}"
     networks: "{{ template.networks }}"

@@ -14,6 +14,7 @@
   async: 7200
   poll: 0
   register: export_ovf_file
+  tags: post-config
 
 - name: wait for ovf export to complete
   async_status:
@@ -22,17 +23,20 @@
   until: ovf.finished
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
+  tags: post-config
 
 - name: create ova file
   archive:
     path: "{{ export_dir }}/{{ template.name }}/*"
     dest: "{{ export_dir }}/{{ template.name }}.ova"
     format: tar
-
+  tags: post-config
+  
 - name: remove exported temp files
   file:
     path: "{{ export_dir }}/{{ template.name }}"
     state: absent
+  tags: post-config
 
 # this is just to close the loop, you can change this implementation to upload ova to some other system/storage
 - name: upload ova file to datastore
@@ -45,3 +49,4 @@
     datastore: "{{ providers.vcenter.datastore | default('datastore2') }}"
     path: "{{ datastore_ova_folder }}/{{ template.name }}.ova"
     validate_certs: no
+  tags: post-config

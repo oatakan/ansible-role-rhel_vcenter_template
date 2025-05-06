@@ -13,3 +13,4 @@
     snapshot_name: "{{ snapshot_name }}"
     description: "{{ snapshot_description }}"
     state: present
+  tags: post-config
