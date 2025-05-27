@@ -3,6 +3,9 @@
 role_action: provision #provision or deprovision
 
 install_updates: yes
+build_template: false # Default Otaka build template configuration
+enable_additional_roles: false
+additional_roles: []
 instance_wait_retry_limit: 300
 instance_wait_connection_timeout: 400
 
@@ -41,6 +44,10 @@ template_vm_ip_address: 192.168.10.98
 template_vm_netmask: 255.255.255.0
 template_vm_gateway: 192.168.10.254
 template_vm_domain: example.com
+template_reboot_delay: 5
+template_vm_secure_boot: false
+template_vm_controller: lsilogicsas
+template_vm_network_controller: e1000e
 template_vm_dns_servers:
   - 8.8.4.4
   - 8.8.8.8
@@ -64,4 +71,4 @@ os_short_names:
     guest_id: rhel8_64Guest
   rhel9:
     ks_folder: rhel9
-    guest_id: rhel8_64Guest
+    guest_id: rhel9_64Guest

@@ -40,7 +40,7 @@ Including an example of how to use your role (for instance, with variables passe
       connection: local
       become: no
       vars:
-        template_force: yes #overwrite existing template with the same name
+        template_force: yes # overwrite existing template with the same name
         export_ovf: no # export the template to export domain upon creation
         local_account_password: ''
         local_administrator_password: ''
@@ -57,14 +57,25 @@ Including an example of how to use your role (for instance, with variables passe
         vcenter_folder: '' # name of the folder to keep the template
         vcenter_datastore: '' # name of the datastore where iso file resides
         
+        template_ks_name: ks-custom.cfg.j2 # name of the kickstart file, defaults to ks.cfg.j2
         template_vm_network_name: mgmt
         template_vm_ip_address: 192.168.10.95 # static ip is required
         template_vm_netmask: 255.255.255.0
         template_vm_gateway: 192.168.10.254
         template_vm_domain: example.com
+        template.controller
         template_vm_dns_servers:
         - 8.8.4.4
         - 8.8.8.8
+
+        install_updates: false # Disables the rhel_upgrade role
+        build_template: false # Disables the rhel_template_build role
+
+        # Run your own customizations
+        enable_additional_roles: true
+        additional_roles:
+          - yourown.role
+          - yourother.role
     
       roles:
         - oatakan.rhel_vcenter_template
@@ -79,6 +90,15 @@ Including an example of how to use your role (for instance, with variables passe
       roles:
         - role: oatakan.rhel_vcenter_template
           role_action: deprovision
+
+Tags
+-------
+
+There are tags available to run parts of the template build process:
+
+preflight: Run only the preflight checks
+custom-roles: Run only the defined custom roles, after initial build has completed
+post-config: Run the post configuration (unregister, convert to template)
 
 License
 -------

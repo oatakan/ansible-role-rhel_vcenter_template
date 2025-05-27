@@ -1,12 +1,16 @@
 ---
 
 - include_tasks: preflight_check.yml
+  tags: 
+    - preflight
+    - post-config
 
 # remove existing template
 - block:
     - include_tasks: convert_to_vm.yml
 
     - include_tasks: remove_vm.yml
+  tags: provision
 
   when:
     - remove_template
@@ -14,3 +18,7 @@
 
 - include_tasks: provision.yml
   when: role_action == 'provision'
+  tags:
+    - provision
+    - custom-roles
+    - post-config

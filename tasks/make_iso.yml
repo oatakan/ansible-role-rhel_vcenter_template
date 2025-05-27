@@ -7,7 +7,7 @@
 
     - name: create ks.cfg file
       template:
-        src: "{{ linux_ks_folder }}/ks.cfg.j2"
+        src: "{{ linux_ks_folder }}/{{ template_ks_name | default('ks.cfg.j2') }}"
         dest: "{{ temp_directory }}/ks_iso/ks.cfg"
 
     - name: create iso
@@ -19,6 +19,7 @@
         chdir: "{{ playbook_dir }}/{{ temp_directory }}/ks_iso"
 
     - include_tasks: datastore_upload.yml
+
   always:
     - name: remove temporary files
       file:

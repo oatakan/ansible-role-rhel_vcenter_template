@@ -2,8 +2,10 @@
 
 - block:
     - include_tasks: make_iso.yml
+      tags: provision
 
     - include_tasks: provision_vm.yml
+      tags: provision
 
     - name: add host
       add_host:
@@ -13,12 +15,25 @@
         ansible_user: "{{ local_account_username }}"
         ansible_password: "{{ local_account_password }}"
         ansible_port: "{{ vm_ansible_port | default('22') }}"
-        ansible_ssh_common_args: '-o UserKnownHostsFile=/dev/null'
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+        ansible_become_password: "{{ local_account_password }}"
+        gather_facts: true
+      tags:
+        - custom-roles
+        - post-config
+
+    - name: Pause for {{ template_reboot_delay }} seconds to make sure reboot is complete
+      ansible.builtin.pause:
+        seconds: "{{ template_reboot_delay }}"
+      tags: custom-roles
 
     - name: run setup module
       setup:
       delegate_to: template_vm
       connection: ssh
+      tags: 
+        - custom-roles
+        - post-config
 
     - block:
         - include_role:
@@ -42,6 +57,20 @@
               delegate_to: template_vm
               connection: ssh
               become: yes
+          when: build_template|bool
+
+        - name: run additional roles
+          block:
+            - name: include roles
+              ansible.builtin.include_role:
+                name: "{{ item }}"
+                apply:
+                  delegate_to: template_vm
+                  connection: ssh
+                  become: true
+              with_items: "{{ enable_additional_roles }}"
+          when: enable_additional_roles | bool and additional_roles | length > 0
+      tags: custom-roles
 
       always:
         - include_role:
@@ -53,30 +82,39 @@
           vars:
             role_action: unregister
 
-    - name: Force handlers to run before stoppping the vm
+    - name: Force handlers to run before stopping the vm
       meta: flush_handlers
+      tags: post-config
 
     - include_tasks: stop_vm.yml
+      tags: post-config
 
     - include_tasks: create_snapshot.yml
       when: create_snapshot|bool
+      tags: post-config
 
     - include_tasks: convert_to_template.yml
+      tags: post-config
 
     - include_tasks: export_ovf.yml
       when: export_ovf|bool
+      tags: post-config
 
   rescue:
     - include_tasks: convert_to_vm.yml
+      tags: post-config
 
     - include_tasks: remove_vm.yml
       when: remove_vm_on_error|bool
+      tags: post-config
 
   always:
     - include_tasks: datastore_iso_remove.yml
+      tags: post-config
 
     - name: remove temporary directory
       file:
         path: "{{ temp_directory }}"
         state: absent
       when: not export_ovf|bool
+      tags: post-config

@@ -16,6 +16,7 @@
   poll: 0
   register: undeploy
   when: template is defined
+  tags: post-config
 
 - name: wait for instance deletion to complete
   async_status:
@@ -24,3 +25,4 @@
   until: instance.finished
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
+  tags: post-config

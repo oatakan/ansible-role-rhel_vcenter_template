@@ -36,15 +36,17 @@ template:
       datastore: "{{ providers.vcenter.datastore | default('datastore1') }}"
   memory: "{{ template_vm_memory }}"
   cpu: "{{ template_vm_cpu }}"
+  controller: "{{ template_vm_controller }}"
   guest_id: "{{ template_vm_guest_id }}"
   boot_firmware: efi
+  secure_boot: "{{ template_vm_secure_boot }}"
   networks:
     - name: "{{ template_vm_network_name }}"
       ip: "{{ template_vm_ip_address }}"
       netmask: "{{ template_vm_netmask }}"
       gateway: "{{ template_vm_gateway }}"
       domain: "{{ template_vm_domain }}"
-      device_type: e1000e
+      device_type: "{{ template_vm_network_controller }}"
       dns_servers: "{{ template_vm_dns_servers }}"
   cdrom:
     - type: iso
