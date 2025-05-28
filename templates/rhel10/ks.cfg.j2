@@ -25,7 +25,7 @@ skipx
 
 eula --agreed
 
-bootloader --append="no_timer_check net.ifnames=0 biosdevname=0"
+bootloader --append="no_timer_check"
 clearpart --all --initlabel
 part /boot/efi --fstype="efi" --size=600 --fsoptions="umask=0077,shortname=winnt" --asprimary
 part /boot --fstype="xfs" --size=1024 --asprimary
@@ -36,7 +36,7 @@ logvol /  --fstype="xfs" --size=1 --grow --name=root --vgname=vg00
 
 authselect --useshadow --enablemd5
 firstboot --disabled
-services --enabled=NetworkManager,sshd,chronyd,cloud-init,cloud-config,cloud-final,cloud-init-local
+services --enabled=NetworkManager,sshd
 reboot
 
 %packages --ignoremissing --excludedocs
