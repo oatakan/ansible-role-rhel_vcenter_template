@@ -1,52 +1,53 @@
 ---
 
-- block:
+- name: Block for shutting down and verifying VM power state
+  block:
 
 #    - name: run scheduled shutdown task
 #      vmware_vm_shell:
-#        hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-#        username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-#        password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+#        hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+#        username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+#        password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
 #        datacenter: "{{ providers.vcenter.datacenter }}"
-#        validate_certs: no
+#        validate_certs: false
 #        vm_id: "{{ template.name }}"
 #        vm_username: root
 #        vm_password: "{{ local_administrator_password }}"
 #        vm_shell: '/sbin/shutdown'
 #        vm_shell_args: ' -P now'
 
-    - name: shutdown guest vm
-      vmware_guest:
-        hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-        username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-        password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-        validate_certs: no
+    - name: Shutdown guest VM via VMware tools
+      community.vmware.vmware_guest:
+        hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+        username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+        password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+        validate_certs: false
         datacenter: "{{ providers.vcenter.datacenter }}"
         cluster: "{{ providers.vcenter.cluster }}"
         uuid: "{{ instance.instance.uuid | default(omit) }}"
         name: "{{ template.name }}"
-        state: shutdownguest
+        state: "shutdownguest"
       async: 7200
       poll: 0
       register: shutdown
       when: template is defined
       tags: post-config
 
-    - name: wait for server to stop responding
-      wait_for:
+    - name: Wait for server to stop responding to SSH
+      ansible.builtin.wait_for:
         host: "{{ template_vm_ip_address }}"
         port: "{{ vm_ansible_port | default('22') }}"
         timeout: 120
         state: stopped
       tags: post-config
 
-    - name: wait for vm status to be poweredoff
-      vmware_guest_info:
-        hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-        username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-        password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+    - name: Wait for VM status to be poweredOff in vCenter
+      community.vmware.vmware_guest_info:
+        hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+        username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+        password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
         datacenter: "{{ providers.vcenter.datacenter }}"
-        validate_certs: no
+        validate_certs: false
         name: "{{ template.name }}"
       register: vm_fact
       until: vm_fact.instance is defined and vm_fact.instance.hw_power_status == 'poweredOff'
@@ -55,31 +56,31 @@
       tags: post-config
 
   rescue:
-    - name: ignoring any error
-      debug:
-        msg: "ignoring error..."
+    - name: Ignoring any error during guest shutdown sequence
+      ansible.builtin.debug:
+        msg: "Ignoring error during guest shutdown sequence..."
       tags: post-config
 
-- name: stop vm
-  vmware_guest:
-    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-    validate_certs: no
+- name: Ensure VM is powered off (force stop if necessary)
+  community.vmware.vmware_guest:
+    hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+    validate_certs: false
     datacenter: "{{ providers.vcenter.datacenter }}"
     cluster: "{{ providers.vcenter.cluster }}"
     uuid: "{{ instance.instance.uuid | default(omit) }}"
     name: "{{ template.name }}"
     cdrom: []
-    state: poweredoff
+    state: "poweredoff"
   async: 7200
   poll: 0
   register: stop
   when: template is defined
   tags: post-config
 
-- name: wait for instance to stop
-  async_status:
+- name: Wait for instance to power off
+  ansible.builtin.async_status:
     jid: "{{ stop.ansible_job_id }}"
   register: instance
   until: instance.finished
@@ -87,12 +88,12 @@
   delay: 10
   tags: post-config
 
-- name: reconfigure vm
-  vmware_guest:
-    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-    validate_certs: no
+- name: Reconfigure VM to remove CD/DVD drives after shutdown
+  community.vmware.vmware_guest:
+    hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+    validate_certs: false
     datacenter: "{{ providers.vcenter.datacenter }}"
     cluster: "{{ providers.vcenter.cluster }}"
     uuid: "{{ instance.instance.uuid | default(omit) }}"

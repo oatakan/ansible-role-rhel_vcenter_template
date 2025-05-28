@@ -1,16 +1,17 @@
 ---
 
-- name: set template_found to false
-  set_fact:
+- name: Initialize template_found to false
+  ansible.builtin.set_fact:
     template_found: false
 
-- block:
-    - name: check if iso file exists
-      vsphere_file:
-        host: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-        username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-        password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-        validate_certs: no
+- name: Block for provision-time preflight checks
+  block:
+    - name: Check if ISO file exists on datastore
+      community.vmware.vsphere_file:
+        host: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+        username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+        password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+        validate_certs: false
         datacenter: "{{ providers.vcenter.datacenter }}"
         datastore: "{{ providers.vcenter.datastore }}"
         path: "{{ datastore_iso_folder }}/{{ iso_file_name }}"
@@ -18,34 +19,35 @@
       register: os_iso_file
       failed_when: false
 
-    - name: check vcenter information
+    - name: Check vCenter information
       community.vmware.vmware_about_info:
-        hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-        username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-        password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-        validate_certs: no
+        hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+        username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+        password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+        validate_certs: false
       register: vcenter_about_info
       failed_when: false
   when: role_action == 'provision'
 
-- name: gather only registered virtual machine templates
-  vmware_vm_info:
-    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-    validate_certs: no
+- name: Gather info for registered virtual machine templates
+  community.vmware.vmware_vm_info:
+    hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+    validate_certs: false
     vm_type: template
     vm_name: "{{ template.name }}"
   register: template_facts
   failed_when: false
 
-- block:
-    - name: set template_found to true
-      set_fact:
+- name: Block for handling existing template (Ansible < 2.8.0)
+  block:
+    - name: Set template_found to true if template exists (Ansible < 2.8.0)
+      ansible.builtin.set_fact:
         template_found: true
 
-    - name: fail with message
-      fail:
+    - name: Fail if existing template found and remove_template is false (Ansible < 2.8.0)
+      ansible.builtin.fail:
         msg: "Existing template found on vcenter: {{ template.name }}"
       when: not remove_template
   when:
@@ -55,13 +57,14 @@
     - template is defined
     - template_facts.virtual_machines[template.name] is defined
 
-- block:
-    - name: set template_found to true
-      set_fact:
+- name: Block for handling existing template (Ansible >= 2.8.0)
+  block:
+    - name: Set template_found to true if template exists (Ansible >= 2.8.0)
+      ansible.builtin.set_fact:
         template_found: true
 
-    - name: fail with message
-      fail:
+    - name: Fail if existing template found and remove_template is false (Ansible >= 2.8.0)
+      ansible.builtin.fail:
         msg: "Existing template found on vcenter: {{ template.name }}"
       when: not remove_template
   when:

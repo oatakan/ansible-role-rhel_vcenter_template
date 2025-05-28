@@ -1,8 +1,8 @@
 ---
 
-role_action: provision #provision or deprovision
+role_action: provision # provision or deprovision
 
-install_updates: yes
+install_updates: true
 build_template: false # Default Otaka build template configuration
 enable_additional_roles: false
 additional_roles: []
@@ -17,12 +17,12 @@ snapshot_description: Linked snapshot for cloning
 template_force: false
 template_found: false
 
-export_ovf: no
+export_ovf: false
 
 datastore_iso_folder: iso
 datastore_ova_folder: ova
 
-remove_vm_on_error: yes
+remove_vm_on_error: true
 
 local_administrator_password: ''
 local_account_username: ansible
@@ -52,7 +52,7 @@ template_vm_dns_servers:
   - 8.8.4.4
   - 8.8.8.8
 
-template_selinux_enabled: no
+template_selinux_enabled: false
 
 permit_root_login_with_password: true
 
