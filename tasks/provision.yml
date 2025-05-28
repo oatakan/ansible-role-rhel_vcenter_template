@@ -1,5 +1,4 @@
 ---
-
 - name: Main block for VM provisioning
   block:
     - name: Include ISO creation tasks
@@ -13,19 +12,19 @@
     - name: Add provisioned VM to inventory
       ansible.builtin.add_host:
         hostname: template_vm
-        ansible_host: '{{ template_vm_ip_address }}'
+        ansible_host: "{{ template_vm_ip_address }}"
         host_key_checking: false
         ansible_user: "{{ local_account_username }}"
         ansible_password: "{{ local_account_password }}"
         ansible_port: "{{ vm_ansible_port | default('22') }}"
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         ansible_become_password: "{{ local_account_password }}"
         gather_facts: true
       tags:
         - custom-roles
         - post-config
 
-    - name: 'Pause for reboot completion'
+    - name: "Pause for reboot completion"
       ansible.builtin.pause:
         seconds: "{{ template_reboot_delay }}"
       tags: custom-roles

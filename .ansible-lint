@@ -1,5 +1,3 @@
 ---
 skip_list:
-  - name[casing]
   - key-order[task]
-  - var-naming[no-jinja]

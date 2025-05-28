@@ -1,6 +1,5 @@
 ---
-
-- name: remove iso file from datastore
+- name: Remove iso file from datastore
   community.vmware.vsphere_file:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"

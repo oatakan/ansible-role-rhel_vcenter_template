@@ -1,19 +1,19 @@
 ---
 - name: Block for alternative ISO creation and upload
   block:
-    - name: create temporary directory for ISO contents
+    - name: Create temporary directory for ISO contents
       ansible.builtin.file:
         path: "{{ temp_directory }}/ks_iso"
         state: directory
         mode: "0755"
 
-    - name: create ks.cfg file from template
+    - name: Create ks.cfg file from template
       ansible.builtin.template:
         src: "{{ linux_ks_folder }}/ks.cfg.j2"
         dest: "{{ temp_directory }}/ks_iso/ks.cfg"
         mode: "0644"
 
-    - name: download template iso file
+    - name: Download template iso file
       ansible.builtin.get_url:
         url: "{{ template_iso_url }}"
         dest: "{{ temp_directory }}/{{ distro_name }}_template.iso"
@@ -23,14 +23,14 @@
       delay: 3
       retries: 5
 
-    - name: set list of directories to copy
+    - name: Set list of directories to copy
       ansible.builtin.set_fact:
         template_iso_list_of_directories_to_extract:
           - /EFI
           - /images
           - /isolinux
 
-    - name: get a list of files from template iso
+    - name: Get a list of files from template iso
       ansible.builtin.shell: >
         set -o pipefail &&
         isoinfo -f -R -i {{ playbook_dir }}/{{ temp_directory }}/{{ distro_name }}_template.iso |
@@ -38,7 +38,7 @@
       register: template_iso_list_of_files
       changed_when: false
 
-    - name: copy files from template iso to target
+    - name: Copy files from template iso to target
       ansible.builtin.shell: |
         set -o pipefail &&
         isoinfo -f -R -i {{ playbook_dir }}/{{ temp_directory }}/{{ distro_name }}_template.iso |\
@@ -54,32 +54,32 @@
         chdir: "{{ playbook_dir }}/{{ temp_directory }}/ks_iso"
       changed_when: false
 
-    - name: modify boot files for kickstart
+    - name: Modify boot files for kickstart
       ansible.builtin.replace:
         path: "{{ playbook_dir }}/{{ temp_directory }}/ks_iso{{ item }}"
-        regexp: '(quiet)$'
-        replace: '\1 ks=cdrom:/ks.cfg'
+        regexp: "(quiet)$"
+        replace: "\\1 ks=cdrom:/ks.cfg"
       loop:
         - /EFI/BOOT/grub.cfg
         - /EFI/BOOT/BOOT.conf
         - /isolinux/isolinux.cfg
       when: item in template_iso_list_of_files.stdout_lines
 
-    - name: change EFI boot timeout to 3 seconds
+    - name: Change EFI boot timeout to 3 seconds
       ansible.builtin.lineinfile:
         path: "{{ playbook_dir }}/{{ temp_directory }}/ks_iso/EFI/BOOT/grub.cfg"
-        regexp: '^set timeout='
-        line: 'set timeout=3'
+        regexp: "^set timeout="
+        line: "set timeout=3"
       when: ('/EFI/BOOT/grub.cfg' in template_iso_list_of_files.stdout_lines)
 
-    - name: change isolinux boot timeout to 3 seconds
+    - name: Change isolinux boot timeout to 3 seconds
       ansible.builtin.lineinfile:
         path: "{{ playbook_dir }}/{{ temp_directory }}/ks_iso/isolinux/isolinux.cfg"
-        regexp: '^timeout'
-        line: 'timeout 30' # 30 tenths of a second = 3 seconds
+        regexp: "^timeout"
+        line: "timeout 30" # 30 tenths of a second = 3 seconds
       when: ('/isolinux/isolinux.cfg' in template_iso_list_of_files.stdout_lines)
 
-    - name: create final iso file with mkisofs
+    - name: Create final iso file with mkisofs
       ansible.builtin.command: >
         mkisofs -U -A "KS_ISO" -V "KS_ISO"
         -volset "KS_ISO" -J -joliet-long -r -v -T -x ./lost+found
@@ -94,7 +94,7 @@
       ansible.builtin.include_tasks: datastore_upload.yml
 
   always:
-    - name: remove temporary ISO files and directory
+    - name: Remove temporary ISO files and directory
       ansible.builtin.file:
         path: "{{ temp_directory }}/{{ item }}"
         state: absent

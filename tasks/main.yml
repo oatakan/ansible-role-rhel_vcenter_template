@@ -1,5 +1,4 @@
 ---
-
 - name: Include preflight check tasks
   ansible.builtin.include_tasks: preflight_check.yml
   tags:

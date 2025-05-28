@@ -1,8 +1,6 @@
 ---
-
 - name: Block for shutting down and verifying VM power state
   block:
-
 #    - name: run scheduled shutdown task
 #      vmware_vm_shell:
 #        hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"

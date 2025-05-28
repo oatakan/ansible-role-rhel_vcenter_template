@@ -1,6 +1,5 @@
 ---
-
-- name: convert to vm
+- name: Convert to vm
   community.vmware.vmware_guest:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"

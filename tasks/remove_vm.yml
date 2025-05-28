@@ -1,6 +1,5 @@
 ---
-
-- name: remove vm
+- name: Remove vm
   community.vmware.vmware_guest:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
@@ -18,7 +17,7 @@
   when: template is defined
   tags: post-config
 
-- name: wait for instance deletion to complete
+- name: Wait for instance deletion to complete
   ansible.builtin.async_status:
     jid: "{{ undeploy.ansible_job_id }}"
   register: instance

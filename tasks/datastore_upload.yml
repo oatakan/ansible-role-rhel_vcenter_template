@@ -1,6 +1,5 @@
 ---
-
-- name: upload iso file to datastore
+- name: Upload iso file to datastore
   community.vmware.vsphere_copy:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"

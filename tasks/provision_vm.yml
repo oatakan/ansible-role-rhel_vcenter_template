@@ -1,6 +1,5 @@
 ---
-
-- name: provision a new vm
+- name: Provision a new vm
   community.vmware.vmware_guest:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
@@ -29,7 +28,7 @@
   register: deploy
   when: template is defined
 
-- name: wait for instance creation to complete
+- name: Wait for instance creation to complete
   ansible.builtin.async_status:
     jid: "{{ deploy.ansible_job_id }}"
   register: instance
@@ -37,7 +36,7 @@
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
 
-- name: add custom attributes
+- name: Add custom attributes
   community.vmware.vmware_guest_custom_attributes:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
@@ -54,9 +53,9 @@
     - instance is defined
     - instance.instance is defined
     - template is defined
-  ignore_errors: true # Changed from yes to true
+  failed_when: false
 
-- name: waiting for servers to come online
+- name: Waiting for servers to come online
   ansible.builtin.wait_for:
     host: "{{ template.networks[0].ip }}"
     port: "{{ template.ansible_port | default(vm_ansible_port) | default(ansible_port) | default('22') }}"
@@ -65,4 +64,4 @@
     - instance is defined
     - instance.instance is defined
     - template is defined
-  ignore_errors: true # Changed from yes to true
+  failed_when: false

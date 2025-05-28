@@ -1,6 +1,5 @@
 ---
-
-- name: create vmware guest snapshot
+- name: Create vmware guest snapshot
   community.vmware.vmware_guest_snapshot:
     hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
     username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
