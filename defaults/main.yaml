@@ -1,15 +1,15 @@
 ---
 
-role_action: provision #provision or deprovision
+role_action: provision # provision or deprovision
 
-install_updates: yes
-build_template: false # Default Otaka build template configuration
+install_updates: true
+build_template: false # Default oatakan build template configuration
 enable_additional_roles: false
 additional_roles: []
 instance_wait_retry_limit: 300
 instance_wait_connection_timeout: 400
 
-create_snapshot: yes
+create_snapshot: true
 snapshot_name: Linked
 snapshot_description: Linked snapshot for cloning
 
@@ -17,28 +17,28 @@ snapshot_description: Linked snapshot for cloning
 template_force: false
 template_found: false
 
-export_ovf: no
+export_ovf: false
 
 datastore_iso_folder: iso
 datastore_ova_folder: ova
 
-remove_vm_on_error: yes
+remove_vm_on_error: true
 
-local_administrator_password: ''
+local_administrator_password: ""
 local_account_username: ansible
-local_account_password: ''
+local_account_password: ""
 
-distro_name: rhel9
-template_iso_url: https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso
-iso_file_name: CentOS-Stream-9-latest-x86_64-dvd1.iso
-linux_ks_folder: rhel9
+distro_name: rhel10
+template_iso_url: https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-dvd1.iso
+iso_file_name: CentOS-Stream-10-latest-x86_64-dvd1.iso
+linux_ks_folder: rhel10
 
-template_vm_name: centos9-stream-x64-v1
+template_vm_name: centos10-stream-x64-v1
 template_vm_root_disk_size: 10
 template_vm_root_disk_type: thin
 template_vm_memory: 4096
 template_vm_cpu: 2
-template_vm_guest_id: rhel8_64Guest
+template_vm_guest_id: rhel9_64Guest
 template_vm_network_name: mgmt
 template_vm_ip_address: 192.168.10.98
 template_vm_netmask: 255.255.255.0
@@ -52,7 +52,7 @@ template_vm_dns_servers:
   - 8.8.4.4
   - 8.8.8.8
 
-template_selinux_enabled: no
+template_selinux_enabled: false
 
 permit_root_login_with_password: true
 
@@ -72,3 +72,6 @@ os_short_names:
   rhel9:
     ks_folder: rhel9
     guest_id: rhel9_64Guest
+  rhel10:
+    ks_folder: rhel10
+    guest_id: rhel9_64Guest # Use RHEL 9 guest ID until VMware releases RHEL 10 specific

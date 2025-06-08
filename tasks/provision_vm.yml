@@ -1,21 +1,20 @@
 ---
-
-- name: provision a new vm
-  vmware_guest:
-    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
-    validate_certs: no
+- name: Provision a new vm
+  community.vmware.vmware_guest:
+    hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
+    validate_certs: false
     datacenter: "{{ providers.vcenter.datacenter }}"
     cluster: "{{ providers.vcenter.cluster }}"
-    resource_pool: "{{ providers.vcenter.resource_pool|default('') }}"
-    folder: "{{ providers.vcenter.folder|default('') }}"
+    resource_pool: "{{ providers.vcenter.resource_pool | default('') }}"
+    folder: "{{ providers.vcenter.folder | default('') }}"
     name: "{{ template.name }}"
-    cdrom: "{{ ([autounattend_cdrom]+template.cdrom)|default(omit) }}"
-    customvalues: "{{ template.customvalues|default(omit) }}"
-    state: poweredon
-    wait_for_ip_address: no
-    disk: "{{ template.disk|default(omit) }}"
+    cdrom: "{{ ([autounattend_cdrom] + template.cdrom) | default(omit) }}"
+    customvalues: "{{ template.customvalues | default(omit) }}"
+    state: "poweredon"
+    wait_for_ip_address: false
+    disk: "{{ template.disk | default(omit) }}"
     hardware:
       secure_boot: "{{ template.secure_boot | default(omit) }}"
       memory_mb: "{{ template.memory }}"
@@ -29,22 +28,22 @@
   register: deploy
   when: template is defined
 
-- name: wait for instance creation to complete
-  async_status:
+- name: Wait for instance creation to complete
+  ansible.builtin.async_status:
     jid: "{{ deploy.ansible_job_id }}"
   register: instance
   until: instance.finished
   retries: "{{ instance_wait_retry_limit }}"
   delay: 10
 
-- name: add custom attributes
-  vmware_guest_custom_attributes:
-    hostname: "{{ lookup('env', 'VMWARE_HOST')|default(providers.vcenter.hostname) }}"
-    username: "{{ lookup('env', 'VMWARE_USER')|default(providers.vcenter.username) }}"
-    password: "{{ lookup('env', 'VMWARE_PASSWORD')|default(providers.vcenter.password) }}"
+- name: Add custom attributes
+  community.vmware.vmware_guest_custom_attributes:
+    hostname: "{{ lookup('env', 'VMWARE_HOST') | default(providers.vcenter.hostname) }}"
+    username: "{{ lookup('env', 'VMWARE_USER') | default(providers.vcenter.username) }}"
+    password: "{{ lookup('env', 'VMWARE_PASSWORD') | default(providers.vcenter.password) }}"
     name: "{{ instance.instance.hw_name }}"
     state: present
-    validate_certs: no
+    validate_certs: false
     attributes:
       - name: app_name
         value: "{{ template.app_name | default('') }}"
@@ -54,10 +53,10 @@
     - instance is defined
     - instance.instance is defined
     - template is defined
-  ignore_errors: yes
+  failed_when: false
 
-- name: waiting for servers to come online
-  wait_for:
+- name: Waiting for servers to come online
+  ansible.builtin.wait_for:
     host: "{{ template.networks[0].ip }}"
     port: "{{ template.ansible_port | default(vm_ansible_port) | default(ansible_port) | default('22') }}"
     timeout: "{{ instance_wait_connection_timeout }}"
@@ -65,4 +64,4 @@
     - instance is defined
     - instance.instance is defined
     - template is defined
-  ignore_errors: yes
+  failed_when: false

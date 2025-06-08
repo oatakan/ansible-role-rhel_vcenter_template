@@ -1,6 +1,6 @@
 ---
 language: python
-python: "2.7"
+python: "3.9"
 
 # Use the new container infrastructure
 sudo: false
@@ -9,21 +9,31 @@ sudo: false
 addons:
   apt:
     packages:
-    - python-pip
+      - python3-pip
 
 install:
-  # Install ansible
-  - pip install ansible
+  # Install ansible and required dependencies
+  - pip3 install ansible ansible-lint
 
   # Check ansible version
   - ansible --version
+  - ansible-lint --version
 
   # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../' >ansible.cfg
+  - printf '[defaults]\nroles_path=../\nhost_key_checking=False\n' >ansible.cfg
 
 script:
   # Basic role syntax check
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+
+  # Run ansible-lint on the role
+  - ansible-lint .
+
+  # Test different RHEL versions syntax
+  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel7"
+  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel8"
+  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel9"
+  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel10"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

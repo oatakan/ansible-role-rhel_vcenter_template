@@ -3,11 +3,12 @@ galaxy_info:
   author: Orcun Atakan
   description: Ansible galaxy role for building a RHEL/CentOS VM template from an ISO file on VMware vcenter.
   role_name: rhel_vcenter_template
+  namespace: oatakan
   company: Red Hat
 
   license: MIT
 
-  min_ansible_version: 2.5
+  min_ansible_version: "2.5"
 
   platforms:
     - name: EL

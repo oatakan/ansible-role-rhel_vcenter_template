@@ -1,119 +1,133 @@
 ---
-
-- block:
-    - include_tasks: make_iso.yml
+- name: Main block for VM provisioning
+  block:
+    - name: Include ISO creation tasks
+      ansible.builtin.include_tasks: make_iso.yml
       tags: provision
 
-    - include_tasks: provision_vm.yml
+    - name: Include VM provisioning tasks
+      ansible.builtin.include_tasks: provision_vm.yml
       tags: provision
 
-    - name: add host
-      add_host:
+    - name: Add provisioned VM to inventory
+      ansible.builtin.add_host:
         hostname: template_vm
-        ansible_host: '{{ template_vm_ip_address }}'
+        ansible_host: "{{ template_vm_ip_address }}"
         host_key_checking: false
         ansible_user: "{{ local_account_username }}"
         ansible_password: "{{ local_account_password }}"
         ansible_port: "{{ vm_ansible_port | default('22') }}"
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         ansible_become_password: "{{ local_account_password }}"
         gather_facts: true
       tags:
         - custom-roles
         - post-config
 
-    - name: Pause for {{ template_reboot_delay }} seconds to make sure reboot is complete
+    - name: "Pause for reboot completion"
       ansible.builtin.pause:
         seconds: "{{ template_reboot_delay }}"
       tags: custom-roles
 
-    - name: run setup module
-      setup:
+    - name: Run setup module on the provisioned VM
+      ansible.builtin.setup:
       delegate_to: template_vm
       connection: ssh
-      tags: 
+      tags:
         - custom-roles
         - post-config
 
-    - block:
-        - include_role:
+    - name: Block for custom role execution
+      block:
+        - name: Include oatakan.rhn role
+          ansible.builtin.include_role:
             name: oatakan.rhn
             apply:
               delegate_to: template_vm
               connection: ssh
-              become: yes
+              become: true
 
-        - include_role:
+        - name: Include oatakan.rhel_upgrade role
+          ansible.builtin.include_role:
             name: oatakan.rhel_upgrade
             apply:
               delegate_to: template_vm
               connection: ssh
-              become: yes
+              become: true
           when: install_updates|bool
 
-        - include_role:
+        - name: Include oatakan.rhel_template_build role
+          ansible.builtin.include_role:
             name: oatakan.rhel_template_build
             apply:
               delegate_to: template_vm
               connection: ssh
-              become: yes
+              become: true
           when: build_template|bool
 
-        - name: run additional roles
+        - name: Block for running additional roles
           block:
-            - name: include roles
+            - name: Include additional roles defined in variables
               ansible.builtin.include_role:
                 name: "{{ item }}"
                 apply:
                   delegate_to: template_vm
                   connection: ssh
                   become: true
-              with_items: "{{ enable_additional_roles }}"
+              with_items: "{{ additional_roles }}" # Corrected from enable_additional_roles
           when: enable_additional_roles | bool and additional_roles | length > 0
       tags: custom-roles
 
       always:
-        - include_role:
+        - name: Always unregister from RHN
+          ansible.builtin.include_role:
             name: oatakan.rhn
             apply:
               delegate_to: template_vm
               connection: ssh
-              become: yes
+              become: true
           vars:
             role_action: unregister
 
-    - name: Force handlers to run before stopping the vm
-      meta: flush_handlers
+    - name: Force handlers to run before stopping the VM
+      ansible.builtin.meta: flush_handlers
       tags: post-config
 
-    - include_tasks: stop_vm.yml
+    - name: Include stop VM tasks
+      ansible.builtin.include_tasks: stop_vm.yml
       tags: post-config
 
-    - include_tasks: create_snapshot.yml
+    - name: Include create snapshot tasks
+      ansible.builtin.include_tasks: create_snapshot.yml
       when: create_snapshot|bool
       tags: post-config
 
-    - include_tasks: convert_to_template.yml
+    - name: Include convert to template tasks
+      ansible.builtin.include_tasks: convert_to_template.yml
       tags: post-config
 
-    - include_tasks: export_ovf.yml
+    - name: Include export OVF tasks
+      ansible.builtin.include_tasks: export_ovf.yml
       when: export_ovf|bool
       tags: post-config
 
   rescue:
-    - include_tasks: convert_to_vm.yml
+    - name: Include convert to VM tasks (rescue)
+      ansible.builtin.include_tasks: convert_to_vm.yml
       tags: post-config
 
-    - include_tasks: remove_vm.yml
+    - name: Include remove VM tasks (rescue)
+      ansible.builtin.include_tasks: remove_vm.yml
       when: remove_vm_on_error|bool
       tags: post-config
 
   always:
-    - include_tasks: datastore_iso_remove.yml
+    - name: Include datastore ISO remove tasks (always)
+      ansible.builtin.include_tasks: datastore_iso_remove.yml
       tags: post-config
 
-    - name: remove temporary directory
-      file:
+    - name: Remove temporary directory (always)
+      ansible.builtin.file:
         path: "{{ temp_directory }}"
         state: absent
       when: not export_ovf|bool

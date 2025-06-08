@@ -1,7 +1,8 @@
 ---
-- hosts: localhost
-  gather_facts: False
+- name: Test playbook for rhel_vcenter_template role
+  hosts: localhost
+  gather_facts: false
   connection: local
-  become: no
+  become: false
   roles:
     - ../.

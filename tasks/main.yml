@@ -1,22 +1,26 @@
 ---
-
-- include_tasks: preflight_check.yml
-  tags: 
+- name: Include preflight check tasks
+  ansible.builtin.include_tasks: preflight_check.yml
+  tags:
     - preflight
     - post-config
 
 # remove existing template
-- block:
-    - include_tasks: convert_to_vm.yml
+- name: Block for removing existing template
+  block:
+    - name: Include convert to VM tasks
+      ansible.builtin.include_tasks: convert_to_vm.yml
 
-    - include_tasks: remove_vm.yml
+    - name: Include remove VM tasks
+      ansible.builtin.include_tasks: remove_vm.yml
   tags: provision
 
   when:
     - remove_template
     - template_found|bool
 
-- include_tasks: provision.yml
+- name: Include provisioning tasks
+  ansible.builtin.include_tasks: provision.yml
   when: role_action == 'provision'
   tags:
     - provision

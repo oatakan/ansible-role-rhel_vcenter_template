@@ -1,0 +1,228 @@
+firewall --disabled
+
+cdrom
+lang en_US.UTF-8
+keyboard us
+timezone UTC
+
+{% if template.networks is defined and template.networks[0].ip is defined and template.networks[0].gateway is defined and template.networks[0].netmask is defined %}
+network --bootproto=static --ip={{ template.networks[0].ip }} --netmask={{ template.networks[0].netmask }} --gateway={{ template.networks[0].gateway }}{% if template.networks[0].dns_servers is defined %} --nameserver={{ template.networks[0].dns_servers|join(',') }}{% endif %}
+{% else %}
+network --bootproto=dhcp
+{% endif %}
+
+network --hostname=localhost.localdomain
+rootpw {{ local_administrator_password }}
+authselect --enableshadow --passalgo=sha512
+
+{% if template_selinux_enabled is undefined or not template_selinux_enabled %}
+selinux --disabled
+{% else %}
+selinux --enforcing
+{% endif %}
+text
+skipx
+
+eula --agreed
+
+bootloader --append="no_timer_check"
+clearpart --all --initlabel
+part /boot/efi --fstype="efi" --size=600 --fsoptions="umask=0077,shortname=winnt" --asprimary
+part /boot --fstype="xfs" --size=1024 --asprimary
+part pv.00 --fstype="lvmpv" --size=1 --grow --asprimary
+volgroup vg00 --pesize=4096 pv.00
+logvol swap  --fstype="swap" --size=4096 --name=swap --vgname=vg00
+logvol /  --fstype="xfs" --size=1 --grow --name=root --vgname=vg00
+
+authselect --useshadow --enablemd5
+firstboot --disabled
+services --enabled=NetworkManager,sshd
+reboot
+
+%packages --ignoremissing --excludedocs
+@Core
+@Base System
+openssh-clients
+openssh-server
+sudo
+openssl-devel
+readline-devel
+zlib-devel
+kernel-headers
+kernel-devel
+gcc
+make
+perl
+curl
+wget
+chrony
+nfs-utils
+net-tools
+vim-enhanced
+curl
+bzip2
+gzip
+tar
+unzip
+rsync
+cloud-init
+cloud-utils-growpart
+gdisk
+sshpass
+openssl
+dnf5
+python3
+python3-pip
+
+# Modern RHEL 10 utilities
+systemd-resolved
+systemd-networkd
+dbus-broker
+
+# Security tools
+aide
+rng-tools
+policycoreutils-python-utils
+
+# Remove unnecessary firmware and packages
+-aic94xx-firmware
+-atmel-firmware
+-b43-openfwwf
+-bfa-firmware
+-ipw2100-firmware
+-ipw2200-firmware
+-ivtv-firmware
+-iwl100-firmware
+-iwl1000-firmware
+-iwl3945-firmware
+-iwl4965-firmware
+-iwl5000-firmware
+-iwl5150-firmware
+-iwl6000-firmware
+-iwl6000g2a-firmware
+-iwl6050-firmware
+-libertas-usb8388-firmware
+-ql2100-firmware
+-ql2200-firmware
+-ql23xx-firmware
+-ql2400-firmware
+-ql2500-firmware
+-rt61pci-firmware
+-rt73usb-firmware
+-xorg-x11-drv-ati-firmware
+-zd1211-firmware
+-NetworkManager-team
+-NetworkManager-tui
+-cockpit
+%end
+
+%post --log=/var/log/ks-post.log
+
+# Configure modern crypto policies for RHEL 10
+update-crypto-policies --set DEFAULT:SHA1
+
+# Enable modern systemd features
+systemctl enable systemd-resolved
+systemctl enable systemd-networkd
+
+{% if permit_root_login_with_password %}
+# Configure SSH for root login (if enabled)
+sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+{% else %}
+# Secure SSH configuration
+sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+{% endif %}
+
+# Enhanced SSH security for RHEL 10
+cat >> /etc/ssh/sshd_config << EOF
+# RHEL 10 Security Enhancements
+Protocol 2
+ClientAliveInterval 300
+ClientAliveCountMax 2
+MaxAuthTries 3
+MaxSessions 10
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+HostbasedAuthentication no
+IgnoreUserKnownHosts yes
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+PermitEmptyPasswords no
+PermitUserEnvironment no
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
+EOF
+
+# Create ansible user with enhanced security
+groupadd {{ local_account_username }}
+useradd -g {{ local_account_username }} -G {{ local_account_username }},wheel -d /home/{{ local_account_username }} -m -s /bin/bash {{ local_account_username }}
+echo "{{ local_account_username }}:{{ local_account_password }}" | chpasswd
+
+# Configure sudo with enhanced security
+dnf5 install -y sudo
+echo "{{ local_account_username }} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/{{ local_account_username }}
+chmod 0440 /etc/sudoers.d/{{ local_account_username }}
+sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+
+# Configure SELinux
+{% if template_selinux_enabled is undefined or not template_selinux_enabled %}
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
+{% else %}
+sed -i 's/SELINUX=disabled/SELINUX=enforcing/g' /etc/selinux/config
+setsebool -P httpd_can_network_connect 1
+{% endif %}
+
+# Configure cloud-init for template usage
+cat > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg << EOF
+network: {config: disabled}
+EOF
+
+# Configure chronyd for time synchronization
+systemctl enable chronyd
+cat >> /etc/chrony.conf << EOF
+# Additional time servers for better synchronization
+server 0.pool.ntp.org iburst
+server 1.pool.ntp.org iburst
+server 2.pool.ntp.org iburst
+server 3.pool.ntp.org iburst
+EOF
+
+# Optimize XFS filesystem settings for VM templates
+echo "# XFS optimizations for VM templates" >> /etc/fstab
+tune2fs -o journal_data_writeback /dev/mapper/vg00-root 2>/dev/null || true
+
+# Configure systemd for better VM performance
+cat >> /etc/systemd/system.conf << EOF
+# VM Template optimizations
+DefaultTimeoutStartSec=30s
+DefaultTimeoutStopSec=30s
+DefaultLimitNOFILE=65536
+EOF
+
+# Clean up package cache and logs
+dnf5 clean all
+rm -rf /var/cache/dnf5/*
+rm -rf /tmp/*
+rm -rf /var/tmp/*
+
+# Clear machine-id for template preparation
+truncate -s 0 /etc/machine-id
+rm -f /var/lib/systemd/random-seed
+
+# Clear network interface persistence
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+rm -f /etc/udev/rules.d/75-persistent-net-generator.rules
+
+# Clear log files
+find /var/log -type f -exec truncate -s 0 {} \;
+
+# Prepare for first boot
+touch /etc/cloud/cloud-init.disabled
+
+echo "RHEL 10 template preparation completed successfully" >> /var/log/template-build.log
+
+%end
