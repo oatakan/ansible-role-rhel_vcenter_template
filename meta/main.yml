@@ -15,9 +15,6 @@ galaxy_info:
       versions:
         - all
 
-  cloud_platforms:
-    - vmware
-
   galaxy_tags:
     - rhel
     - vmware
