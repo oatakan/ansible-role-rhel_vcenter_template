@@ -68,7 +68,7 @@
                   delegate_to: template_vm
                   connection: ssh
                   become: true
-              with_items: "{{ enable_additional_roles }}"
+              with_items: "{{ additional_roles }}"
           when: enable_additional_roles | bool and additional_roles | length > 0
       tags: custom-roles
 

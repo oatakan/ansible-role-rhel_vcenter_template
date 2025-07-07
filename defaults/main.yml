@@ -72,3 +72,6 @@ os_short_names:
   rhel9:
     ks_folder: rhel9
     guest_id: rhel9_64Guest
+  rhel10:
+    ks_folder: rhel10
+    guest_id: rhel9_64Guest
