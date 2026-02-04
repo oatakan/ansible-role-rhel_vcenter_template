@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# JetBrains / PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Ansible artifacts
+*.retry
+
+# Local ansible config (often generated in CI or locally)
+ansible.cfg
+
+# Role runtime scratch/output (role uses temp_directory like tmp{awx_job_id})
+tmp*/
+
+# Common build/export outputs in this repo
+*.iso
+*.ovf
+*.ova
+
+# Python caches (some users run ansible-lint or tooling via Python)
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.tox/
+.venv/
+venv/
+
+# Editor swap/backup files
+*~
+*.swp
+
+# Environment files
+.env
+.env.*
+.direnv/
+.envrc

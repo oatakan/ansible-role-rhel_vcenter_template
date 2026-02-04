@@ -1,246 +1,193 @@
-# rhel_vcenter_template
-This repo contains an Ansible role that builds a RHEL/CentOS VM template from an ISO file on VMware vCenter.
-You can run this role as a part of CI/CD pipeline for building RHEL/CentOS templates on VMware vCenter from an ISO file.
+# oatakan.rhel_vcenter_template
 
-> **_Note:_** This role is provided as an example only. Do not use this in production. You can fork/clone and add/remove steps for your environment based on your organization's security and operational requirements.
+Provision a **RHEL/CentOS (and compatible) VM template on VMware vCenter** from an installer ISO that already exists on a vCenter datastore.
 
-## Supported Distributions
-- Red Hat Enterprise Linux 7
-- Red Hat Enterprise Linux 8  
-- Red Hat Enterprise Linux 9
-- **Red Hat Enterprise Linux 10** (New!)
-- CentOS 7, 8, 9
-- CentOS Stream 8, 9
+This role focuses on the **vCenter lifecycle** (create VM → install via kickstart → optional post-config roles → convert to template → optional OVF/OVA export).
+For OS “golden image” hardening and cleanup, it can optionally run the companion role [`oatakan.rhel_template_build`](https://github.com/oatakan/ansible-role-rhel_template_build) over SSH during the build.
+
+> Note: This role uses `validate_certs: false` for VMware modules in its tasks.
+
+## What this role does
+
+High-level flow (see [tasks/main.yml](tasks/main.yml) and [tasks/provision.yml](tasks/provision.yml)):
+
+1. **Preflight** ([tasks/preflight_check.yml](tasks/preflight_check.yml))
+   - Validates the installer ISO exists in the datastore at `{{ datastore_iso_folder }}/{{ iso_file_name }}`.
+   - Detects whether a template already exists with `template_vm_name`.
+2. **Kickstart ISO (OEMDRV)**
+   - Renders `ks.cfg` from [templates/](templates/) and builds a small ISO via `mkisofs` ([tasks/make_iso.yml](tasks/make_iso.yml)).
+   - Uploads it to the datastore ([tasks/datastore_upload.yml](tasks/datastore_upload.yml)).
+3. **Provision VM**
+   - Creates/powers on the VM with two CDROMs: installer ISO + the kickstart ISO ([tasks/provision_vm.yml](tasks/provision_vm.yml)).
+   - Waits for SSH to become reachable.
+4. **Optional post-install configuration over SSH**
+   - Adds a runtime host `template_vm` and delegates SSH roles to it ([tasks/provision.yml](tasks/provision.yml)).
+   - Can run `oatakan.rhn`, `oatakan.rhel_upgrade` (updates), and `oatakan.rhel_template_build` (golden image prep).
+5. **Post-config / finalize**: Shuts down guest, removes CDROM drives, optionally snapshots, converts to template, optionally exports OVF/OVA, and adds vCenter custom attributes (see [tasks/convert_to_template.yml](tasks/convert_to_template.yml)): `template_created_at` and `template_updated_at`.
+
+## Supported systems
+
+This repo includes kickstarts under [templates/](templates/) for `rhel7`, `rhel8`, `rhel9`, `rhel10`.
+CI primarily does **lint/syntax validation** (not a real vCenter integration test).
+
+RHEL 10 currently uses `rhel9_64Guest` by default (see `os_short_names` in [defaults/main.yaml](defaults/main.yaml)).
 
 ## Requirements
-------------
 
-You need to have the following packages installed on your control machine:
+Control node requirements:
 
-- mkisofs
-- genisoimage
+- Ansible (this role declares `min_ansible_version: 2.5` in [meta/main.yml](meta/main.yml); newer is typically required by current VMware collections)
+- Ansible collections:
+  - `community.vmware`
+  - `community.general` (used for OVA creation in [tasks/export_ovf.yml](tasks/export_ovf.yml))
+- A working VMware Python stack (commonly `pyvmomi`) available to Ansible
+- `mkisofs` available on the control node (often provided by `genisoimage`)
 
-Before you can use this role, you need to make sure you have RHEL/CentOS install media iso file uploaded to a datastore on your vCenter environment.
+vCenter requirements:
 
-## Role Variables
---------------
+- Installer ISO already uploaded to the datastore (path: `{{ datastore_iso_folder }}/{{ iso_file_name }}`)
+- Access to the target `datacenter`, `cluster`, and optional `resource_pool`/`folder`
 
-### Core Variables
-- `role_action`: Set to 'provision' or 'deprovision' (default: provision)
-- `distro_name`: Target distribution - rhel7, rhel8, rhel9, rhel10 (default: rhel10)
-- `template_vm_name`: Name for the created template (default: rhel10-x64-v1)
-- `template_force`: Overwrite existing template with same name (default: false)
-- `iso_file_name`: Name of the ISO file in the datastore
+## VMware credentials
 
-### RHEL 10 Specific Variables
-- `template_vm_guest_id`: VM guest ID type (default: rhel9_64Guest for RHEL 10)
-- `template_vm_secure_boot`: Enable secure boot for UEFI systems (default: false)
-- `template_vm_controller`: SCSI controller type (default: lsilogicsas)
+The VMware tasks default to environment variables:
 
-### Network Configuration
-- `template_vm_network_name`: Network name in vCenter
-- `template_vm_ip_address`: Static IP address (required)
-- `template_vm_netmask`: Network subnet mask
-- `template_vm_gateway`: Default gateway
-- `template_vm_domain`: DNS domain name
-- `template_vm_dns_servers`: List of DNS servers
+- `VMWARE_HOST`
+- `VMWARE_USER`
+- `VMWARE_PASSWORD`
 
-### vCenter Configuration
-- `vcenter_datacenter`: vCenter datacenter name
-- `vcenter_cluster`: vCenter cluster name
-- `vcenter_resource_pool`: Resource pool (optional)
-- `vcenter_folder`: VM folder location
-- `vcenter_datastore`: Datastore for template storage
+(`providers.vcenter.*` in [vars/main.yml](vars/main.yml) defines location objects like datacenter/cluster/datastore, not auth by default.)
 
-### Template Customization
-- `template_ks_name`: Custom kickstart file name (default: ks.cfg.j2)
-- `enable_additional_roles`: Enable custom role execution (default: false)
-- `additional_roles`: List of additional Ansible roles to execute
-- `install_updates`: Install system updates during build (default: true)
-- `build_template`: Run oatakan.rhel_template_build role (default: false)
+## Integration with oatakan.rhel_template_build
 
-## Dependencies
-------------
+This role can run OS “golden image” configuration by delegating to `template_vm` over SSH.
 
-Required roles for full functionality:
-- oatakan.rhn
-- oatakan.rhel_upgrade  
-- oatakan.rhel_template_build
+- Enable it with `build_template: true`.
+- Ensure SSH is possible using the credentials created by kickstart:
+  - `local_account_username`
+  - `local_account_password`
+  - `template_vm_ip_address`
 
-## Example Playbooks
-----------------
+The delegated execution happens in [tasks/provision.yml](tasks/provision.yml) and is compatible with the design of [`oatakan.rhel_template_build`](https://github.com/oatakan/ansible-role-rhel_template_build).
 
-### RHEL 10 Template Creation
+## Common variables
+
+See [defaults/main.yaml](defaults/main.yaml) for the full list. The most commonly set variables are:
+
+| Variable | Default | Description |
+| --- | ---: | --- |
+| `role_action` | `provision` | `provision` or `deprovision` |
+| `distro_name` | `rhel10` | Selects kickstart folder + guest ID mapping |
+| `iso_file_name` | (CentOS Stream 10 ISO) | Installer ISO name in datastore |
+| `datastore_iso_folder` | `iso` | Folder on datastore that contains installer ISO |
+| `template_vm_name` | `centos10-stream-x64-v1` | VM/template name in vCenter |
+| `template_force` | `false` | Overwrite existing template (convert to VM + delete) |
+| `vcenter_datacenter` / `vcenter_cluster` | | vCenter placement |
+| `vcenter_datastore` / `vcenter_folder` | | Datastore/folder placement |
+| `template_vm_network_name` | `mgmt` | Port group name |
+| `template_vm_ip_address` | `192.168.10.98` | Static IP used for SSH wait + delegated roles |
+| `local_account_username` | `ansible` | SSH user created by kickstart |
+| `local_account_password` | `""` | SSH password for delegated roles |
+| `install_updates` | `true` | Runs `oatakan.rhel_upgrade` when enabled |
+| `build_template` | `false` | Runs `oatakan.rhel_template_build` when enabled |
+| `export_ovf` | `false` | Exports OVF/OVA after template conversion |
+
+## Example playbook
+
+Provision a RHEL 10 template and run `oatakan.rhel_template_build` afterwards:
+
 ```yaml
 ---
-- name: create a vmware rhel 10 template
-  hosts: all
+- name: Build a vCenter VM template via kickstart
+  hosts: localhost
   gather_facts: false
   connection: local
-  become: false
   vars:
-    template_force: yes # overwrite existing template with the same name
-    export_ovf: no # export the template to export domain upon creation
-    local_account_password: ''
-    local_administrator_password: ''
     distro_name: rhel10
     template_vm_name: rhel10-x64-v1
-    template_vm_guest_id: rhel9_64Guest
-    template_vm_root_disk_size: 20
-    template_vm_memory: 4096
-    template_vm_cpu: 2
-    template_vm_secure_boot: true
-    iso_file_name: 'rhel-10.0-x86_64-dvd.iso'
-    
-    vcenter_datacenter: 'production'
-    vcenter_cluster: 'cluster1'
-    vcenter_resource_pool: 'templates'
-    vcenter_folder: 'vm-templates'
-    vcenter_datastore: 'shared-storage'
-    
+
+    # vCenter placement
+    vcenter_datacenter: production
+    vcenter_cluster: cluster1
+    vcenter_resource_pool: templates
+    vcenter_folder: vm-templates
+    vcenter_datastore: shared-storage
+
+    # Installer ISO already uploaded to datastore
+    datastore_iso_folder: iso
+    iso_file_name: rhel-10.0-x86_64-dvd.iso
+
+    # Network (static IP is used for SSH wait/delegation)
     template_vm_network_name: mgmt
-    template_vm_ip_address: 192.168.10.95 # static ip is required
+    template_vm_ip_address: 192.168.10.95
     template_vm_netmask: 255.255.255.0
     template_vm_gateway: 192.168.10.254
     template_vm_domain: example.com
-    template_vm_dns_servers:
-    - 8.8.4.4
-    - 8.8.8.8
+    template_vm_dns_servers: [8.8.8.8, 8.8.4.4]
 
+    # Kickstart-created SSH user for post-install roles
+    local_account_username: ansible
+    local_account_password: "CHANGE_ME"
+    local_administrator_password: "CHANGE_ME"
+
+    # Optional post-install hardening/build
     install_updates: true
     build_template: true
-    enable_additional_roles: true
-    additional_roles:
-      - mycompany.security_hardening
-      - mycompany.monitoring_agent
-
-  roles:
-    - oatakan.rhel_vcenter_template
-```
-
-### RHEL 9 Template Creation (Backward Compatible)
-```yaml
----
-- name: create a vmware rhel 9 template
-  hosts: all
-  gather_facts: false
-  connection: local
-  become: false
-  vars:
-    template_force: yes
-    distro_name: rhel9
-    template_vm_name: rhel9-x64-v1
-    template_vm_guest_id: rhel9_64Guest
-    iso_file_name: 'rhel-9.3-x86_64-dvd.iso'
-    # ... other variables
-
-  roles:
-    - oatakan.rhel_vcenter_template
-```
-
-### Template Deletion
-```yaml
----
-- name: delete a vmware rhel template
-  hosts: all
-  gather_facts: false
-  connection: local
-  become: false
 
   roles:
     - role: oatakan.rhel_vcenter_template
-      role_action: deprovision
+```
+
+Deprovision/remove an existing template:
+
+```yaml
+---
+- name: Remove a vCenter template
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  roles:
+    - role: oatakan.rhel_vcenter_template
+      vars:
+        role_action: deprovision
+        template_vm_name: rhel10-x64-v1
 ```
 
 ## Tags
--------
 
-Available tags to run specific parts of the template build process:
+The main tag groups are:
 
-- `preflight`: Run only the preflight checks
-- `provision`: Run the full provisioning process
-- `custom-roles`: Run only the defined custom roles, after initial build has completed
-- `post-config`: Run the post configuration (unregister, convert to template)
+- `preflight` – datastore ISO check and template existence detection
+- `provision` – kickstart ISO + VM provisioning
+- `custom-roles` – SSH delegated roles (including `oatakan.rhel_template_build`)
+- `post-config` – shutdown, snapshot, convert-to-template, export, cleanup
 
-### Example Usage with Tags
+## Testing (local)
+
+This repo’s CI runs lint and syntax checks (see [.travis.yml](.travis.yml)):
+
 ```bash
-# Run only preflight checks
-ansible-playbook site.yml --tags preflight
+ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+ansible-lint .
 
-# Run only custom roles
-ansible-playbook site.yml --tags custom-roles
-
-# Skip custom roles
-ansible-playbook site.yml --skip-tags custom-roles
+# validate distro mapping/templates
+ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel7"
+ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel8"
+ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel9"
+ansible-playbook tests/test.yml -i tests/inventory --syntax-check -e "distro_name=rhel10"
 ```
 
-## RHEL 10 Specific Features
---------------------------
-
-### Enhanced Security
-- Modern SSH configuration with strong ciphers and MACs
-- Updated crypto policies (DEFAULT:SHA1)
-- Enhanced systemd security features
-- Improved SELinux configurations
-
-### Package Management
-- DNF5 as default package manager
-- Optimized package selection for cloud/VM environments
-- Enhanced dependency resolution
-
-### System Optimizations
-- Cloud-init integration for better cloud deployment
-- Optimized XFS filesystem settings
-- Modern systemd configurations
-- Improved time synchronization with chronyd
-
-### VMware Compatibility
-- Uses rhel9_64Guest ID until VMware releases RHEL 10 specific guest tools
-- Enhanced hardware compatibility settings
-- Optimized for modern VMware vSphere environments
-
 ## Troubleshooting
------------------
 
-### Common Issues
-
-1. **RHEL 10 ISO not found**
-   - Ensure the ISO file is uploaded to the specified datastore
-   - Verify the `iso_file_name` variable matches the actual file name
-
-2. **Guest ID compatibility**
-   - RHEL 10 currently uses `rhel9_64Guest` guest ID
-   - Update to RHEL 10 specific guest ID when available from VMware
-
-3. **Secure Boot issues**
-   - Ensure vCenter supports secure boot for the target hardware version
-   - Disable secure boot if experiencing boot issues
-
-4. **Network configuration problems**
-   - Verify static IP settings are correct for your environment
-   - Ensure DNS servers are accessible from the target network
+- **Installer ISO not found**: ensure the datastore path `{{ datastore_iso_folder }}/{{ iso_file_name }}` exists (see [tasks/preflight_check.yml](tasks/preflight_check.yml)).
+- **Template already exists**: set `template_force: true` (or run `role_action: deprovision` first).
+- **SSH delegation fails**: confirm `template_vm_ip_address` is reachable and the kickstart created `local_account_username`/`local_account_password`.
+- **RHEL 10 guest ID**: defaults to `rhel9_64Guest` until VMware publishes a RHEL 10-specific ID.
 
 ## License
--------
 
 MIT
 
-## Author Information
-------------------
+## Author
 
 Orcun Atakan
-
-## Contributing
---------------
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes following Ansible best practices
-4. Test with ansible-lint
-5. Submit a pull request
-
-### Development Guidelines
-- Follow existing code style and patterns
-- Maintain backward compatibility
-- Update documentation for new features
-- Test with multiple RHEL versions when possible
