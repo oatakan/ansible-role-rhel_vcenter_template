@@ -120,6 +120,11 @@
       ansible.builtin.include_tasks: remove_vm.yml
       when: remove_vm_on_error|bool
       tags: post-config
+    
+    - name: set vm_failed variable
+      ansible.builtin.set_fact:
+        vm_failed: true
+      tags: post-config
 
   always:
     - name: Include datastore ISO remove tasks (always)
@@ -132,3 +137,9 @@
         state: absent
       when: not export_ovf|bool
       tags: post-config
+
+- name: fail if needed
+  ansible.builtin.fail:
+    msg: "fail to create a template: {{ template.name }}."
+  when: vm_failed|bool
+  tags: post-config

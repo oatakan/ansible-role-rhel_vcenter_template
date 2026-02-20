@@ -27,6 +27,7 @@ datastore_iso_folder: iso
 datastore_ova_folder: ova
 
 remove_vm_on_error: true
+vm_failed: false
 
 local_administrator_password: ""
 local_account_username: ansible
