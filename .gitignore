@@ -9,6 +9,7 @@
 
 # Ansible artifacts
 *.retry
+*.ansible/
 
 # Local ansible config (often generated in CI or locally)
 ansible.cfg
